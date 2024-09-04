@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function paginateAndRenderTable(page, size) {
-       
+       //remove loader
         const paginatedData = paginate(allAuditLogs, page, size);
         populateTable(paginatedData);
         
