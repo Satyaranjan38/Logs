@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function paginateAndRenderTable(page, size) {
-       showLoader() ; 
+       
         const paginatedData = paginate(allAuditLogs, page, size);
         populateTable(paginatedData);
         
