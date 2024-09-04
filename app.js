@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function populateTable(data) {
         const tableBody = document.getElementById('auditTable').querySelector('tbody');
         tableBody.innerHTML = '';
-
+    
         data.forEach(log => {
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -129,26 +129,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${log.org_id}</td>
                 <td>${log.space_id}</td>
                 <td>${log.category}</td>
-                <td><button class="show-message-btn" data-message="${log.message}">Show Message</button></td>
+                <td><button class="show-message-btn" data-message="${encodeURIComponent(log.message)}">Show Message</button></td>
             `;
             tableBody.appendChild(row);
         });
-
+    
         // Add event listeners to "Show Message" buttons
         document.querySelectorAll('.show-message-btn').forEach(button => {
             button.addEventListener('click', function() {
-                const message = this.getAttribute('data-message');
-                showMessageModal(message);
+                const encodedMessage = this.getAttribute('data-message');
+                const message = decodeURIComponent(encodedMessage);
+    
+                try {
+                    const parsedMessage = JSON.parse(message);
+                    const formattedMessage = JSON.stringify(parsedMessage, null, 2); // Indent for readability
+                    showMessageModal(formattedMessage);
+                } catch (e) {
+                    console.error('Error parsing message:', e);
+                    showMessageModal('Invalid message format');
+                }
             });
         });
     }
-
+    
     function showMessageModal(message) {
         const modal = document.getElementById('messageModal');
         const fullMessageElement = document.getElementById('fullMessage');
+        console.log("Message is " + message); 
         fullMessageElement.textContent = message;
         modal.style.display = 'block';
     }
+    
 
     // Close modal on clicking 'X'
     document.querySelector('.close').addEventListener('click', function() {
