@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="loader" class="loader">
+        <div class="dot1"></div>
+        <div class="dot2"></div>
+        <div class="dot3"></div>
+    </div>
+    <form id="timeForm">
+        <label for="time_from">From:</label>
+        <input type="datetime-local" id="time_from" required>
+        <label for="time_to">To:</label>
+        <input type="datetime-local" id="time_to" required>
+        <button type="submit">Get Logs</button>
+    </form>
+
+    <div class="table-container">
+        <table id="auditTable">
+            <thead>
+                <tr>
+                    <th>Message UUID</th>
+                    <th>Time</th>
+                    <th>Tenant</th>
+                    <th>Org ID</th>
+                    <th>Space ID</th>
+                    <th>Category</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Logs will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="pagination">
+        <button id="prevPage" disabled>Previous</button>
+        <span id="currentPage">1</span>
+        <button id="nextPage">Next</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
