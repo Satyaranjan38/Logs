@@ -129,10 +129,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${log.org_id}</td>
                 <td>${log.space_id}</td>
                 <td>${log.category}</td>
+                <td><button class="show-message-btn" data-message="${log.message}">Show Message</button></td>
             `;
             tableBody.appendChild(row);
         });
+
+        // Add event listeners to "Show Message" buttons
+        document.querySelectorAll('.show-message-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const message = this.getAttribute('data-message');
+                showMessageModal(message);
+            });
+        });
     }
+
+    function showMessageModal(message) {
+        const modal = document.getElementById('messageModal');
+        const fullMessageElement = document.getElementById('fullMessage');
+        fullMessageElement.textContent = message;
+        modal.style.display = 'block';
+    }
+
+    // Close modal on clicking 'X'
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('messageModal').style.display = 'none';
+    });
+
+    // Close the modal when the user clicks anywhere outside of it
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('messageModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
 
     function updatePagination(totalItems, currentPage, pageSize) {
         const totalPages = Math.ceil(totalItems / pageSize);
