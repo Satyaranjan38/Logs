@@ -1,22 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
-    const pageSize = 10;
-    let allAuditLogs = []; // Store all fetched audit logs here
+    const pageSize = 10; // Limit
+    let totalItems = 0;  // Total items from backend response
+
+    const form = document.getElementById('timeForm');
 
     let timeFrom1 = new Date();
     timeFrom1.setMonth(timeFrom1.getMonth() - 2); // 2 months before today
     timeFrom1 = timeFrom1.toISOString().split("T")[0];
-    timeFrom1 = timeFrom1+"T16%3A55" ;
+    timeFrom1 = timeFrom1 + "T16%3A55";
 
-    let  timeTo1 = new Date().toISOString().split("T")[0]; // Today's date
-    timeTo1 = timeTo1+"T16%3A55";
+    let timeTo1 = new Date().toISOString().split("T")[0]; // Today's date
+    timeTo1 = timeTo1 + "T16%3A55";
 
-
-    currentPage = 1; // Reset to first page on new search
-    fetchTokenAndAuditLogs(timeFrom1, timeTo1);
-
-    fetchToken();
-    const form = document.getElementById('timeForm');
+    fetchTokenAndAuditLogs(timeFrom1, timeTo1, pageSize, 0); // Initial fetch with offset 0
 
     // Date validation to prevent future dates
     document.getElementById('time_from').max = new Date().toISOString().split("T")[0];
@@ -32,12 +29,12 @@ document.addEventListener('DOMContentLoaded', function() {
             timeFrom = new Date();
             timeFrom.setMonth(timeFrom.getMonth() - 2); // 2 months before today
             timeFrom = timeFrom.toISOString().split("T")[0];
-            timeFrom = timeFrom+"T16%3A55" ;
+            timeFrom = timeFrom + "T16%3A55";
         }
 
         if (!timeTo) {
             timeTo = new Date().toISOString().split("T")[0]; // Today's date
-            timeTo = timeTo+"T16%3A55";
+            timeTo = timeTo + "T16%3A55";
         }
 
         // Ensure valid date range
@@ -47,17 +44,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         currentPage = 1; // Reset to first page on new search
-        fetchTokenAndAuditLogs(timeFrom, timeTo);
+        fetchTokenAndAuditLogs(timeFrom, timeTo, pageSize, 0);
     });
 
-    function fetchTokenAndAuditLogs(timeFrom, timeTo) {
+    function fetchTokenAndAuditLogs(timeFrom, timeTo, limit, offset) {
         let token = localStorage.getItem('accessToken');
 
         if (token) {
-            fetchAuditLogs(token, timeFrom, timeTo);
+            fetchAuditLogs(token, timeFrom, timeTo, limit, offset);
         } else {
             fetchToken().then(token => {
-                fetchAuditLogs(token, timeFrom, timeTo);
+                fetchAuditLogs(token, timeFrom, timeTo, limit, offset);
             }).catch(error => console.error('Error fetching token:', error));
         }
     }
@@ -87,8 +84,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function fetchAuditLogs(token, timeFrom, timeTo) {
-        const apiUrl = `https://AuditLogApplication-turbulent-kookaburra-ri.cfapps.eu10-004.hana.ondemand.com/getAuditLogs?time_from=${encodeURIComponent(timeFrom)}&time_to=${encodeURIComponent(timeTo)}`;
+    function fetchAuditLogs(token, timeFrom, timeTo, limit, offset) {
+        const apiUrl = `https://AuditLogApplication-turbulent-kookaburra-ri.cfapps.eu10-004.hana.ondemand.com/getAuditLogs?time_from=${encodeURIComponent(timeFrom)}&time_to=${encodeURIComponent(timeTo)}&limit=${limit}&offset=${offset}`;
         showLoader();
         fetch(apiUrl, {
             method: 'GET',
@@ -110,30 +107,26 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            allAuditLogs = data; // Store all logs
-            paginateAndRenderTable(currentPage, pageSize);
-            updatePagination(allAuditLogs.length, currentPage, pageSize);
+            totalItems = data.totalItems; // Assuming totalItems is returned by the API
+            populateTable(data); // Assuming 'logs' contains the audit log entries
+            updatePagination(totalItems, currentPage, pageSize);
             hideLoader();
         })
         .catch(error => console.error('Error fetching audit logs:', error));
     }
 
-    function paginateAndRenderTable(page, size) {
-       //remove loader
-        const paginatedData = paginate(allAuditLogs, page, size);
-        populateTable(paginatedData);
-        
-    }
-
-    function paginate(data, page, size) {
-        const start = (page - 1) * size;
-        const end = start + size;
-        return data.slice(start, end);
-    }
-
     function populateTable(data) {
+        
         const tableBody = document.getElementById('auditTable').querySelector('tbody');
         tableBody.innerHTML = '';
+    
+        if (!data || !data.length) {
+            // Handle the case when data is undefined or an empty array
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="7">No audit logs found.</td>`;
+            tableBody.appendChild(row);
+            return;
+        }
     
         data.forEach(log => {
             const row = document.createElement('tr');
@@ -167,14 +160,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+
     function showMessageModal(message) {
         const modal = document.getElementById('messageModal');
         const fullMessageElement = document.getElementById('fullMessage');
-        console.log("Message is " + message); 
         fullMessageElement.textContent = message;
         modal.style.display = 'block';
     }
-    
 
     // Close modal on clicking 'X'
     document.querySelector('.close').addEventListener('click', function() {
@@ -199,16 +191,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('prevPage').addEventListener('click', function() {
             if (currentPage > 1) {
                 currentPage--;
-                paginateAndRenderTable(currentPage, pageSize);
-                updatePagination(totalItems, currentPage, pageSize);
+                const offset = (currentPage - 1) * pageSize;
+                fetchTokenAndAuditLogs(document.getElementById('time_from').value, document.getElementById('time_to').value, pageSize, offset);
             }
         });
 
         document.getElementById('nextPage').addEventListener('click', function() {
             if (currentPage < totalPages) {
                 currentPage++;
-                paginateAndRenderTable(currentPage, pageSize);
-                updatePagination(totalItems, currentPage, pageSize);
+                const offset = (currentPage - 1) * pageSize;
+                fetchTokenAndAuditLogs(document.getElementById('time_from').value, document.getElementById('time_to').value, pageSize, offset);
             }
         });
     }
