@@ -3,6 +3,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const pageSize = 10;
     let allAuditLogs = []; // Store all fetched audit logs here
 
+    let timeFrom1 = new Date();
+    timeFrom1.setMonth(timeFrom1.getMonth() - 2); // 2 months before today
+    timeFrom1 = timeFrom1.toISOString().split("T")[0];
+    timeFrom1 = timeFrom1+"T16%3A55" ;
+
+    let  timeTo1 = new Date().toISOString().split("T")[0]; // Today's date
+    timeTo1 = timeTo1+"T16%3A55";
+
+
+    currentPage = 1; // Reset to first page on new search
+    fetchTokenAndAuditLogs(timeFrom1, timeTo1);
+
     fetchToken();
     const form = document.getElementById('timeForm');
 
@@ -20,10 +32,12 @@ document.addEventListener('DOMContentLoaded', function() {
             timeFrom = new Date();
             timeFrom.setMonth(timeFrom.getMonth() - 2); // 2 months before today
             timeFrom = timeFrom.toISOString().split("T")[0];
+            timeFrom = timeFrom+"T16%3A55" ;
         }
 
         if (!timeTo) {
             timeTo = new Date().toISOString().split("T")[0]; // Today's date
+            timeTo = timeTo+"T16%3A55";
         }
 
         // Ensure valid date range
@@ -69,7 +83,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             const token = data.token;
             localStorage.setItem('accessToken', token);
-            hideLoader();
             return token;
         });
     }
@@ -106,8 +119,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function paginateAndRenderTable(page, size) {
+       showLoader() ; 
         const paginatedData = paginate(allAuditLogs, page, size);
         populateTable(paginatedData);
+        
     }
 
     function paginate(data, page, size) {
